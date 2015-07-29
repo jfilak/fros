@@ -19,7 +19,7 @@
 
 
 import sys
-from ctypes import cdll, util
+from ctypes import cdll, util, c_void_p, c_char_p
 
 XLIB_PATH = util.find_library('X11')
 if not XLIB_PATH:
@@ -27,12 +27,20 @@ if not XLIB_PATH:
     sys.exit(1)
 
 XLIB = cdll.LoadLibrary(XLIB_PATH)
-DISPLAY = XLIB.XOpenDisplay(None)
+
+XOpenDisplay = XLIB.XOpenDisplay
+XOpenDisplay.argtypes = [c_char_p]
+XOpenDisplay.restype = c_void_p
+
+DISPLAY = XOpenDisplay(None)
 if DISPLAY == 0:
     sys.stderr.write("Cannot connect to X server\n")
     sys.exit(2)
 
-XLIB.XCloseDisplay(DISPLAY)
+XCloseDisplay = XLIB.XCloseDisplay
+XCloseDisplay.argtypes = [c_void_p]
+
+XCloseDisplay(DISPLAY)
 
 from pyfros.froslogging import error, info, set_verbosity
 from pyfros.controls import Controls
