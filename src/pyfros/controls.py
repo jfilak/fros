@@ -15,6 +15,10 @@
 ## along with this program; if not, write to the Free Software
 ## Foundation, Inc., 51 Franklin Street, Suite 500, Boston, MA  02110-1335  USA
 
+# As suggested by a PyGIWarning
+import gi
+gi.require_version('Gtk', '3.0')
+
 # pylint has troubles importing from gi.repository because
 # it uses introspection
 # pylint: disable=E0611
