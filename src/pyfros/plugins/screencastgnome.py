@@ -149,7 +149,8 @@ class ScreencastGnome(ScreencastBase):
         end_handler()
 
     def IsSuitable(self):
-        if "gnome" in os.getenv("DESKTOP_SESSION"):
+        if os.environ.get('XDG_CURRENT_DESKTOP') in \
+                            ['GNOME', 'GNOME-Classic:GNOME', 'GNOME-Classic']:
             return const.SUITABLE_PREFERED
         else:
             return const.SUITABLE_NOT_SUITABLE
