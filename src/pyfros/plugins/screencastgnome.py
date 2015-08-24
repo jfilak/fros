@@ -102,6 +102,7 @@
   </interface>
 """
 from pyfros.screencastbase import ScreencastBase, ScreencastResult
+from pyfros.froslogging import info, error
 import pyfros.plugins.const as const
 import dbus
 import os
@@ -120,35 +121,48 @@ class ScreencastGnome(ScreencastBase):
 
     def __init__(self, *args, **kwargs):
         super(ScreencastGnome, self).__init__(*args, **kwargs)
-        bus = dbus.SessionBus()
-        self._proxy = dbus.Interface(
-            bus.get_object(
-                BUS_NAME, BUS_PATH,
-                follow_name_owner_changes=False
-            ),
-            BUS_IFACE
-        )
-
+        self._proxy = None
         self.output = os.path.join(os.getcwd(), "screencast-%d-%t.webm")
 
+    def _backend(self):
+        if self._proxy is None:
+            bus = dbus.SessionBus()
+            obj = bus.get_object(BUS_NAME, BUS_PATH, follow_name_owner_changes=False)
+            self._proxy = dbus.Interface(obj, BUS_IFACE)
+
+        return self._proxy
+
     def Screencast(self):
-        succ, filename = self._proxy.ScreencastArea(self.x,
-                                                    self.y,
-                                                    self.width,
-                                                    self.height,
-                                                    self.output,
-                                                    {"framerate": 5}
-                                                    )
-        return ScreencastResult(succ, filename)
+        try:
+            succ, filename = self._backend().ScreencastArea(self.x,
+                                                        self.y,
+                                                        self.width,
+                                                        self.height,
+                                                        self.output,
+                                                        {"framerate": 5}
+                                                        )
+            return ScreencastResult(succ, filename)
+        except dbus.exceptions.DBusException as ex:
+            error("Failed to start GNOME screencasting: %s" % (str(ex)))
+            return ScreencastResult(False, None)
 
     def ScreencastArea(self):
         raise NotImplementedError
 
     def StopScreencast(self, end_handler):
-        self._proxy.StopScreencast()
+        try:
+            self._backend().StopScreencast()
+        except dbus.exceptions.DBusException as ex:
+            error("Failed to stop GNOME screencasting: %s" % (str(ex)))
         end_handler()
 
     def IsSuitable(self):
+        try:
+            self._backend()
+        except dbus.exceptions.DBusException as ex:
+            info("D-Bus GNOME Screencaster is not available: %s" % (str(ex)))
+            return const.SUITABLE_NOT_SUITABLE
+
         if os.environ.get('XDG_CURRENT_DESKTOP') in \
                             ['GNOME', 'GNOME-Classic:GNOME', 'GNOME-Classic']:
             return const.SUITABLE_PREFERED
