@@ -17,14 +17,14 @@
 
 from pyfros.screencastbase import ScreencastBase, ScreencastResult
 import pyfros.plugins.const as const
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, DEVNULL
 import fcntl
 import os
 import signal
 #pylint: disable=E0611
 from gi.repository import GLib
 import re
-from pyfros.froslogging import warn
+from pyfros.froslogging import warn, error
 
 
 def getScreencastPluginInstance():
@@ -95,6 +95,13 @@ class ScreencastRecordMyDesktop(ScreencastBase):
         print("ScreencastArea ScreencastRecordMyDesktop")
 
     def IsSuitable(self):
+        try:
+            proc = Popen(["recordmydesktop", "-h"], stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
+            proc.communicate()
+        except Exception as ex:
+            error("Cannot run 'recordmydesktop': %s" % (str(ex)))
+            return const.SUITABLE_NOT_SUITABLE
+
         return const.SUITABLE_DEFAULT  # 1 is default
 
     def Screencast(self):
