@@ -31,6 +31,7 @@ while across various desktops and screencasting programs is seamless.
 Summary: fros plugin for screencasting using recordmydesktop as a backend
 Group: Applications/System
 Requires: %{name} = %{version}-%{release}
+Requires: recordmydesktop
 
 %description recordmydesktop
 fros plugin for screencasting using recordmydesktop as a backend
